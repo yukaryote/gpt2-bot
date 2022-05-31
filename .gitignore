@@ -134,3 +134,4 @@ dmypy.json
 # Local
 fb_messages
 *.csv
+train_test_splits/*
