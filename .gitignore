@@ -135,3 +135,5 @@ dmypy.json
 fb_messages
 *.csv
 train_test_splits/*
+gpt2_orig
+models/*
