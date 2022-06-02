@@ -43,6 +43,7 @@ from transformers import (
 )
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -299,4 +300,6 @@ def _mp_fn(index):
 
 
 if __name__ == "__main__":
-    main()
+    print(torch.cuda.is_available())
+    if torch.cuda.is_available():
+        main()

@@ -6,6 +6,9 @@ import codecs
 import argparse
 
 
+FORBIDDEN = {'sticker', 'gifs', 'audio_files', 'videos', 'photos'}
+
+
 def extract_messages(chatname, datapath, person_name):
     chatname.strip().lower()
     messages_json = os.path.join(datapath, [i for i in os.listdir(datapath) if chatname in i][0], "message_1.json")
@@ -14,9 +17,10 @@ def extract_messages(chatname, datapath, person_name):
 
     extracted = []
     for m in chat:
+        print(m)
         if (person_name is not None and m['sender_name'] == person_name or person_name is None) and \
                 m['type'] == 'Generic' and not m['is_unsent'] \
-                and 'photos' not in m.keys() and 'audio_files' not in m.keys() and 'videos' not in m.keys():
+                and not any(key in FORBIDDEN for key in m.keys()):
             if "Reacted" != m['content'][:7]:
                 message = m["content"].encode('latin1').decode('utf-8')
                 extracted.append(message)

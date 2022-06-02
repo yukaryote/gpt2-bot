@@ -4,11 +4,8 @@ import os
 import discord
 from dotenv import load_dotenv
 import random
-import string
-import re
-import requests
-from io import BytesIO
-import datetime
+import argparse
+
 from transformers import (
     CTRLLMHeadModel,
     CTRLTokenizer,
@@ -23,14 +20,6 @@ from transformers import (
     XLNetLMHeadModel,
     XLNetTokenizer,
 )
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD = os.getenv("DISCORD_GUILD")
-
-model_path = "models/jade/pytorch_model.bin"
 
 MODEL_CLASSES = {
     "gpt2": (GPT2LMHeadModel, GPT2Tokenizer),
@@ -55,9 +44,9 @@ def adjust_length_to_model(length, max_sequence_length):
 
 
 class DustyClient(discord.Client):
-    def __init__(self, type="gpt2"):
+    def __init__(self, path, type="gpt2"):
         super().__init__()
-        self.model_name_or_path = type
+        self.model_name_or_path = os.path.join(path)
         self.model_type, self.tokenizer_class = MODEL_CLASSES[type]
         self.tokenizer = self.tokenizer_class.from_pretrained(self.model_name_or_path)
         self.model = self.model_type.from_pretrained(self.model_name_or_path)
@@ -66,6 +55,7 @@ class DustyClient(discord.Client):
         self.model.to(self.device)
         self.length = adjust_length_to_model(length=20, max_sequence_length=self.model.config.max_position_embeddings)
         self.prefix = ""
+        self.stop_token = "<EOS>"
 
         self.temperature = 1.
         self.k = 0.
@@ -116,7 +106,8 @@ class DustyClient(discord.Client):
 
             # Decode text
             text = self.tokenizer.decode(generated_sequence, clean_up_tokenization_spaces=True)
-
+            # Remove all text after the stop token
+            text = text[: text.find(self.stop_token) if self.stop_token else None]
             # Add the prompt at the beginning of the sequence. Remove the excess text that was used for pre-processing
             total_sequence = (
                     text[len(self.tokenizer.decode(encoded_prompt[0], clean_up_tokenization_spaces=True)):]
@@ -127,5 +118,16 @@ class DustyClient(discord.Client):
             await message.channel.send(total_sequence)
 
 
-client = DustyClient()
-client.run(TOKEN)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--path", default="bots/jade_model/", help="path to bot you want to use")
+    args = parser.parse_args()
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+    load_dotenv(os.path.join(args.path, ".env"))
+    TOKEN = os.getenv("DISCORD_TOKEN")
+    GUILD = os.getenv("DISCORD_GUILD")
+
+    client = DustyClient(args.path)
+    client.run(TOKEN)
