@@ -54,7 +54,8 @@ class DustyClient(discord.Client):
         print("device", self.device)
         self.model.to(self.device)
         self.length = adjust_length_to_model(length=20, max_sequence_length=self.model.config.max_position_embeddings)
-        self.prefix = ""
+        self.prefix = "Hello, I'm Isabella. Who are you? Hello, I'm Jade, nice to meet you. Hi Jade! What's your " \
+                      "favorite color? My favorite color is light turquoise :) "
         self.stop_token = "<EOS>"
 
         self.temperature = 1.
@@ -115,7 +116,11 @@ class DustyClient(discord.Client):
 
             generated_sequences.append(total_sequence)
             print(total_sequence)
-            await message.channel.send(total_sequence)
+            print(len(total_sequence))
+            try:
+                await message.channel.send(total_sequence)
+            except discord.errors.HTTPException:
+                await message.channel.send("...")
 
 
 if __name__ == "__main__":
